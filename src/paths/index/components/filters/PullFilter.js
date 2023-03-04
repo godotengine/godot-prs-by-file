@@ -50,7 +50,7 @@ export default class PullFilter extends LitElement {
             bottom: 0;
             width: 36px;
             background-color: var(--g-background-extra-color);
-            background-image: url('/remove.svg');
+            background-image: url('remove.svg');
             background-repeat: no-repeat;
             background-position: center;
             background-size: 20px 20px;

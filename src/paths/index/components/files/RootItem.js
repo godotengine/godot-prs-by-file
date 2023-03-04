@@ -33,7 +33,7 @@ export default class RootItem extends LitElement {
           }
 
           :host .root-icon {
-            background-image: url('/filesystem.svg');
+            background-image: url('filesystem.svg');
             background-size: cover;
             border-radius: 2px;
             display: inline-block;

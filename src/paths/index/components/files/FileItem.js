@@ -50,10 +50,10 @@ export default class FileItem extends LitElement {
             min-width: 16px;
           }
           :host .file-icon--folder {
-            background-image: url('/folder.svg');
+            background-image: url('folder.svg');
           }
           :host .file-icon--file {
-            background-image: url('/file.svg');
+            background-image: url('file.svg');
             filter: brightness(0.5);
           }
 
