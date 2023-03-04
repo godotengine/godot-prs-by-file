@@ -35,6 +35,7 @@ export default class EntryComponent extends LitElement {
         this._isLoading = true;
         this._generatedAt = null;
 
+        this._branches = [];
         this._files = {};
 
         this._requestData();
@@ -56,37 +57,49 @@ export default class EntryComponent extends LitElement {
         if (data) {
             this._generatedAt = data.generated_at;
 
-            data.files.forEach((file) => {
-                if (file.type === "file" || file.type === "folder") {
-                    if (typeof this._files[file.parent] === "undefined") {
-                        this._files[file.parent] = [];
-                    }
-
-                    this._files[file.parent].push(file);
+            data.branches.forEach((branch) => {
+                if (typeof data.files[branch] === "undefined") {
+                    return;
                 }
-            });
 
-            for (let folderName in this._files) {
-                this._files[folderName].sort((a, b) => {
-                    if (a.type === "folder" && b.type !== "folder") {
-                        return -1;
-                    }
-                    if (b.type === "folder" && a.type !== "folder") {
-                        return 1;
-                    }
+                this._branches.push(branch);
+                const branchFiles = {};
+
+                data.files[branch].forEach((file) => {
+                    if (file.type === "file" || file.type === "folder") {
+                        if (typeof branchFiles[file.parent] === "undefined") {
+                            branchFiles[file.parent] = [];
+                        }
     
-                    const a_name = a.path.toLowerCase();
-                    const b_name = b.path.toLowerCase();
-    
-                    if (a_name > b_name) return 1;
-                    if (a_name < b_name) return -1;
-                    return 0;
+                        branchFiles[file.parent].push(file);
+                    }
                 });
-            }
+
+                for (let folderName in branchFiles) {
+                    branchFiles[folderName].sort((a, b) => {
+                        if (a.type === "folder" && b.type !== "folder") {
+                            return -1;
+                        }
+                        if (b.type === "folder" && a.type !== "folder") {
+                            return 1;
+                        }
+        
+                        const a_name = a.path.toLowerCase();
+                        const b_name = b.path.toLowerCase();
+        
+                        if (a_name > b_name) return 1;
+                        if (a_name < b_name) return -1;
+                        return 0;
+                    });
+                }
+
+                this._files[branch] = branchFiles;
+            });
         } else {
             this._generatedAt = null;
 
-            this._files = [];
+            this._branches = [];
+            this._files = {};
         }
 
         this._isLoading = false;
@@ -104,6 +117,7 @@ export default class EntryComponent extends LitElement {
                 ` : html`
                     <div class="files">
                         <gr-file-list
+                            .branches="${this._branches}"
                             .files="${this._files}"
                         ></gr-file-list>
                     </div>

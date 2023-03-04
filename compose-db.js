@@ -38,8 +38,8 @@ class DataFetcher {
         }
     }
     
-    _handleResponseErrors(res) {
-        console.warn(`    Failed to get pull requests for '${API_REPOSITORY_ID}'; server responded with ${res.status} ${res.statusText}`);
+    _handleResponseErrors(queryID, res) {
+        console.warn(`    Failed to get data from '${queryID}'; server responded with ${res.status} ${res.statusText}`);
         const retry_header = res.headers.get("Retry-After");
         if (retry_header) {
             console.log(`    Retry after: ${retry_header}`);
@@ -99,7 +99,7 @@ class DataFetcher {
     
             const res = await this.fetchGithub(query);
             if (res.status !== 200) {
-                this._handleResponseErrors(res);
+                this._handleResponseErrors(API_REPOSITORY_ID, res);
                 process.exitCode = ExitCodes.RequestFailure;
                 return;
             }
@@ -201,7 +201,7 @@ class DataFetcher {
     
             const res = await this.fetchGithub(query);
             if (res.status !== 200) {
-                this._handleResponseErrors(res);
+                this._handleResponseErrors(API_REPOSITORY_ID, res);
                 process.exitCode = ExitCodes.RequestFailure;
                 return [];
             }
@@ -233,7 +233,7 @@ class DataFetcher {
 
             const res = await this.fetchGithubRest(query);
             if (res.status !== 200) {
-                this._handleResponseErrors(res);
+                this._handleResponseErrors(query, res);
                 process.exitCode = ExitCodes.RequestFailure;
                 return [];
             }
@@ -259,7 +259,10 @@ class DataProcessor {
     constructor() {
         this.authors = {};
         this.pulls = [];
-        this.files = [];
+        this.branches = [];
+        this.files = {};
+
+        this._pullsByFile = {};
     }
 
     _explainFileType(type) {
@@ -298,6 +301,11 @@ class DataProcessor {
 
                     "files": [],
                 };
+
+                // Store the target branch if it hasn't been stored.
+                if (!this.branches.includes(pr.target_branch)) {
+                    this.branches.push(pr.target_branch);
+                }
 
                 // Compose and link author information.
                 const author = {
@@ -360,6 +368,17 @@ class DataProcessor {
                 });
 
                 this.pulls.push(pr);
+
+                // Cache the pull information for every file that it includes.
+                if (typeof this._pullsByFile[pr.target_branch] === "undefined") {
+                    this._pullsByFile[pr.target_branch] = {};
+                }
+                pr.files.forEach((file) => {
+                    if (typeof this._pullsByFile[pr.target_branch][file.path] === "undefined") {
+                        this._pullsByFile[pr.target_branch][file.path] = [];
+                    }
+                    this._pullsByFile[pr.target_branch][file.path].push(pr.public_id);
+                })
             });
         } catch (err) {
             console.error("    Error parsing pull request data: " + err);
@@ -367,23 +386,42 @@ class DataProcessor {
         }
     }
 
-    processFiles(filesRaw) {
+    processFiles(targetBranch, filesRaw) {
         try {
+            this.files[targetBranch] = [];
+
             filesRaw.forEach((item) => {
                 let file = {
                     "type": this._explainFileType(item.type),
                     "name": item.path.split("/").pop(),
                     "path": item.path,
                     "parent": "",
+                    "pulls": [],
                 };
 
+                // Store the parent path for future reference.
                 let parentPath = item.path.split("/");
                 parentPath.pop();
                 if (parentPath.length > 0) {
                     file.parent = parentPath.join("/");
                 }
 
-                this.files.push(file);
+                // Fetch the PRs touching this file or files in this folder from the cache.
+                if (typeof this._pullsByFile[targetBranch] !== "undefined") {
+                    for (let filePath in this._pullsByFile[targetBranch]) {
+                        if (filePath !== file.path && filePath.indexOf(file.path + "/") < 0) {
+                            continue;
+                        }
+
+                        this._pullsByFile[targetBranch][filePath].forEach((pullNumber) => {
+                            if (!file.pulls.includes(pullNumber)) {
+                                file.pulls.push(pullNumber);
+                            }
+                        });
+                    }
+                }
+
+                this.files[targetBranch].push(file);
             });
         } catch (err) {
             console.error("    Error parsing repository file system: " + err);
@@ -415,24 +453,26 @@ async function main() {
     await dataFetcher.checkRates();
     checkForExit();
 
-    // console.log("[*] Fetching pull request data from GitHub.");
-    // // Pages are starting with 1 for better presentation.
-    // let page = 1;
-    // while (page <= page_count) {
-    //     const pullsRaw = await dataFetcher.fetchPulls(page);
-    //     dataProcessor.processPulls(pullsRaw);
-    //     checkForExit();
-    //     page++;
+    console.log("[*] Fetching pull request data from GitHub.");
+    // Pages are starting with 1 for better presentation.
+    let page = 1;
+    while (page <= page_count) {
+        const pullsRaw = await dataFetcher.fetchPulls(page);
+        dataProcessor.processPulls(pullsRaw);
+        checkForExit();
+        page++;
 
-    //     // Wait for a bit before proceeding to avoid hitting the secondary rate limit in GitHub API.
-    //     // See https://docs.github.com/en/rest/guides/best-practices-for-integrators#dealing-with-secondary-rate-limits.
-    //     await delay(1500);
-    // }
+        // Wait for a bit before proceeding to avoid hitting the secondary rate limit in GitHub API.
+        // See https://docs.github.com/en/rest/guides/best-practices-for-integrators#dealing-with-secondary-rate-limits.
+        await delay(1500);
+    }
 
     console.log("[*] Fetching repository file system from GitHub.");
-    const filesRaw = await dataFetcher.fetchFiles("master");
-    dataProcessor.processFiles(filesRaw);
-    checkForExit();
+    for (let branch of dataProcessor.branches) {
+        const filesRaw = await dataFetcher.fetchFiles(branch);
+        dataProcessor.processFiles(branch, filesRaw);
+        checkForExit();
+    }
 
     console.log("[*] Checking the rate limits after.")
     await dataFetcher.checkRates();
@@ -443,6 +483,7 @@ async function main() {
         "generated_at": Date.now(),
         "authors": dataProcessor.authors,
         "pulls": dataProcessor.pulls,
+        "branches": dataProcessor.branches,
         "files": dataProcessor.files,
     };
     try {

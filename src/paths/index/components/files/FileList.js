@@ -46,8 +46,12 @@ export default class FileList extends LitElement {
         `;
     }
 
+    @property({ type: Array }) branches = [];
     @property({ type: Object }) files = {};
-    @property({ type: Array }) selected = [];
+
+    @property({ type: String }) selectedRepository = "godotengine/godot";
+    @property({ type: String }) selectedBranch = "master";
+    @property({ type: Array }) selectedFolders = [];
 
     constructor() {
         super();
@@ -58,34 +62,34 @@ export default class FileList extends LitElement {
         return;
       }
 
-      const entryIndex = this.selected.indexOf(entryPath);
+      const entryIndex = this.selectedFolders.indexOf(entryPath);
       if (entryIndex >= 0) {
-        this.selected.splice(entryIndex, 1);
+        this.selectedFolders.splice(entryIndex, 1);
       } else {
-        this.selected.push(entryPath);
+        this.selectedFolders.push(entryPath);
       }
 
       this.requestUpdate();
     }
 
-    renderFolder(levelEntries) {
+    renderFolder(branchFiles, folderFiles) {
       return html`
         <div class="file-list-folder">
-            ${(levelEntries.length > 0) ?
-                levelEntries.map((item) => {
+            ${(folderFiles.length > 0) ?
+                folderFiles.map((item) => {
                     return html`
                         <div>
                             <gr-file-item
                                 .path="${item.path}"
                                 .name="${item.name}"
                                 .type="${item.type}"
-                                .pull_count="${item.pull_count}"
-                                ?active="${this.selected.includes(item.path)}"
+                                .pull_count="${item.pulls.length}"
+                                ?active="${this.selectedFolders.includes(item.path)}"
                                 @click="${this._onItemClicked.bind(this, item.type, item.path)}"
                             ></gr-file-item>
 
-                            ${(this.selected.includes(item.path)) ? 
-                              this.renderFolder(this.files[item.path] || []) : null
+                            ${(this.selectedFolders.includes(item.path)) ? 
+                              this.renderFolder(branchFiles, branchFiles[item.path] || []) : null
                             }
                         </div>
                     `;
@@ -98,16 +102,17 @@ export default class FileList extends LitElement {
     }
 
     render() {
-        const topLevel = this.files[""] || [];
+        const branchFiles = this.files[this.selectedBranch];
+        const topLevel = branchFiles[""] || [];
 
         return html`
             <div class="file-list">
               <gr-root-item
-                .repository="${"godotengine/godot"}"
-                .branch="${"master"}"
+                .repository="${this.selectedRepository}"
+                .branch="${this.selectedBranch}"
               ></gr-root-item>
 
-              ${this.renderFolder(topLevel)}
+              ${this.renderFolder(branchFiles, topLevel)}
             </div>
         `;
     }
