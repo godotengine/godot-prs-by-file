@@ -21,6 +21,10 @@ export default class EntryComponent extends LitElement {
           /** Component styling **/
           :host {
           }
+
+          :host .files {
+            margin-top: 16px;
+          }
         `;
     }
 

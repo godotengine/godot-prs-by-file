@@ -107,10 +107,13 @@ export default class FileItem extends LitElement {
         }
 
         return html`
-            <div class="${classList.join(" ")}">
+            <div
+              class="${classList.join(" ")}"
+              title="${this.path}"
+            >
                 <div class="${iconClassList.join(" ")}"></div>
                 <span class="file-title">
-                    ${this.path}
+                    ${this.name}
                 </span>
                 <span class="${countClassList.join(" ")}">
                     ${this.pull_count}

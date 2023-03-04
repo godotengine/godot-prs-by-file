@@ -1,5 +1,6 @@
 import { LitElement, html, css, customElement, property } from 'lit-element';
 
+import RootItem from "./RootItem"
 import FileItem from "./FileItem";
 
 @customElement('gr-file-list')
@@ -29,6 +30,10 @@ export default class FileList extends LitElement {
             min-height: 216px;
           }
 
+          :host .file-list-folder .file-list-folder {
+            margin-left: 12px;
+          }
+
           @media only screen and (max-width: 900px) {
             :host {
               width: 100%
@@ -42,10 +47,54 @@ export default class FileList extends LitElement {
     }
 
     @property({ type: Object }) files = {};
-    @property({ type: String }) selected = "";
+    @property({ type: Array }) selected = [];
 
     constructor() {
         super();
+    }
+
+    _onItemClicked(entryType, entryPath) {
+      if (entryType !== "folder") {
+        return;
+      }
+
+      const entryIndex = this.selected.indexOf(entryPath);
+      if (entryIndex >= 0) {
+        this.selected.splice(entryIndex, 1);
+      } else {
+        this.selected.push(entryPath);
+      }
+
+      this.requestUpdate();
+    }
+
+    renderFolder(levelEntries) {
+      return html`
+        <div class="file-list-folder">
+            ${(levelEntries.length > 0) ?
+                levelEntries.map((item) => {
+                    return html`
+                        <div>
+                            <gr-file-item
+                                .path="${item.path}"
+                                .name="${item.name}"
+                                .type="${item.type}"
+                                .pull_count="${item.pull_count}"
+                                ?active="${this.selected.includes(item.path)}"
+                                @click="${this._onItemClicked.bind(this, item.type, item.path)}"
+                            ></gr-file-item>
+
+                            ${(this.selected.includes(item.path)) ? 
+                              this.renderFolder(this.files[item.path] || []) : null
+                            }
+                        </div>
+                    `;
+                }) : html`
+                    <span>This path is empty</span>
+                `
+            }
+        </div>
+      `;
     }
 
     render() {
@@ -53,23 +102,12 @@ export default class FileList extends LitElement {
 
         return html`
             <div class="file-list">
-                <div class="file-list-section">
-                    ${(topLevel.length > 0) ?
-                        topLevel.map((item) => {
-                            return html`
-                                <gr-file-item
-                                    .path="${item.path}"
-                                    .name="${item.name}"
-                                    .type="${item.type}"
-                                    .pull_count="${item.pull_count}"
-                                    ?active="${false}"
-                                />
-                            `;
-                        }) : html`
-                            <span>There are no files</span>
-                        `
-                    }
-                </div>
+              <gr-root-item
+                .repository="${"godotengine/godot"}"
+                .branch="${"master"}"
+              ></gr-root-item>
+
+              ${this.renderFolder(topLevel)}
             </div>
         `;
     }
