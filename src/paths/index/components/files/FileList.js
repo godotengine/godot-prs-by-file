@@ -51,25 +51,34 @@ export default class FileList extends LitElement {
 
     @property({ type: String }) selectedRepository = "godotengine/godot";
     @property({ type: String }) selectedBranch = "master";
+    @property({ type: String }) selectedPath = "";
     @property({ type: Array }) selectedFolders = [];
 
     constructor() {
         super();
     }
 
-    _onItemClicked(entryType, entryPath) {
-      if (entryType !== "folder") {
-        return;
+    _onItemClicked(entryType, entryPath, entryPulls) {
+      if (entryType === "root") {
+        this.selectedFolders = [];
+
+        this.requestUpdate();
+      } else if (entryType === "folder") {
+        const entryIndex = this.selectedFolders.indexOf(entryPath);
+        if (entryIndex >= 0) {
+          this.selectedFolders.splice(entryIndex, 1);
+        } else {
+          this.selectedFolders.push(entryPath);
+        }
+
+        this.requestUpdate();
       }
 
-      const entryIndex = this.selectedFolders.indexOf(entryPath);
-      if (entryIndex >= 0) {
-        this.selectedFolders.splice(entryIndex, 1);
-      } else {
-        this.selectedFolders.push(entryPath);
-      }
-
-      this.requestUpdate();
+      this.dispatchEvent(greports.util.createEvent("pathclicked", {
+          "type": entryType,
+          "path": entryPath,
+          "pulls": entryPulls,
+      }));
     }
 
     renderFolder(branchFiles, folderFiles) {
@@ -84,8 +93,8 @@ export default class FileList extends LitElement {
                                 .name="${item.name}"
                                 .type="${item.type}"
                                 .pull_count="${item.pulls.length}"
-                                ?active="${this.selectedFolders.includes(item.path)}"
-                                @click="${this._onItemClicked.bind(this, item.type, item.path)}"
+                                ?active="${this.selectedPath.indexOf(item.path) === 0}"
+                                @click="${this._onItemClicked.bind(this, item.type, item.path, item.pulls)}"
                             ></gr-file-item>
 
                             ${(this.selectedFolders.includes(item.path)) ? 
@@ -110,6 +119,7 @@ export default class FileList extends LitElement {
               <gr-root-item
                 .repository="${this.selectedRepository}"
                 .branch="${this.selectedBranch}"
+                @click="${this._onItemClicked.bind(this, "root", "", [])}"
               ></gr-root-item>
 
               ${this.renderFolder(branchFiles, topLevel)}

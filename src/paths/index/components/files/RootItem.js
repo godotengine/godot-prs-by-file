@@ -6,9 +6,11 @@ export default class RootItem extends LitElement {
         return css`
           /** Colors and variables **/
           :host {
+            --tab-hover-background-color: rgba(0, 0, 0, 0.14);
           }
           @media (prefers-color-scheme: dark) {
             :host {
+              --tab-hover-background-color: rgba(255, 255, 255, 0.14);
             }
           }
 
@@ -19,11 +21,15 @@ export default class RootItem extends LitElement {
 
           :host .root-item {
             color: var(--g-font-color);
+            cursor: pointer;
             display: flex;
             flex-direction: row;
             gap: 8px;
             padding: 6px 12px 6px 6px;
             align-items: center;
+          }
+          :host .root-item:hover {
+            background-color: var(--tab-hover-background-color);
           }
 
           :host .root-icon {

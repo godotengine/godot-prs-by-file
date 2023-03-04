@@ -5,6 +5,7 @@ import IndexHeader from "./components/IndexHeader";
 import IndexDescription from "./components/IndexDescription";
 
 import FileList from "./components/files/FileList";
+import PullList from "./components/pulls/PullRequestList"
 
 @customElement('entry-component')
 export default class EntryComponent extends LitElement {
@@ -23,7 +24,14 @@ export default class EntryComponent extends LitElement {
           }
 
           :host .files {
-            margin-top: 16px;
+            display: flex;
+            padding: 24px 0;
+          }
+
+          @media only screen and (max-width: 900px) {
+            :host .files {
+              flex-wrap: wrap;
+            }
           }
         `;
     }
@@ -35,8 +43,15 @@ export default class EntryComponent extends LitElement {
         this._isLoading = true;
         this._generatedAt = null;
 
+        this._authors = {};
         this._branches = [];
         this._files = {};
+        this._pulls = [];
+
+        this._selectedRepository = "godotengine/godot";
+        this._selectedBranch = "master";
+        this._selectedPath = "";
+        this._selectedPathPulls = [];
 
         this._requestData();
     }
@@ -56,6 +71,8 @@ export default class EntryComponent extends LitElement {
 
         if (data) {
             this._generatedAt = data.generated_at;
+            this._authors = data.authors;
+            this._pulls = data.pulls;
 
             data.branches.forEach((branch) => {
                 if (typeof data.files[branch] === "undefined") {
@@ -98,11 +115,24 @@ export default class EntryComponent extends LitElement {
         } else {
             this._generatedAt = null;
 
+            this._authors = {};
             this._branches = [];
             this._files = {};
+            this._pulls = [];
+
+            this._selectedRepository = "godotengine/godot";
+            this._selectedBranch = "master";
+            this._selectedPath = "";
+            this._selectedPathPulls = [];
         }
 
         this._isLoading = false;
+        this.requestUpdate();
+    }
+
+    _onPathClicked(event) {
+        this._selectedPath = event.detail.path;
+        this._selectedPathPulls = event.detail.pulls;
         this.requestUpdate();
     }
 
@@ -119,7 +149,19 @@ export default class EntryComponent extends LitElement {
                         <gr-file-list
                             .branches="${this._branches}"
                             .files="${this._files}"
+                            .selectedRepository="${this._selectedRepository}"
+                            .selectedBranch="${this._selectedBranch}"
+                            .selectedPath="${this._selectedPath}"
+                            @pathclicked="${this._onPathClicked}"
                         ></gr-file-list>
+
+                        <gr-pull-list
+                            .pulls="${this._pulls}"
+                            .authors="${this._authors}"
+                            .selectedBranch="${this._selectedBranch}"
+                            .selectedPath="${this._selectedPath}"
+                            .selectedPulls="${this._selectedPathPulls}"
+                        ></gr-pull-list>
                     </div>
                 `)}
             </page-content>

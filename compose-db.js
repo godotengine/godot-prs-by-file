@@ -355,11 +355,42 @@ class DataProcessor {
 
                 // Add changed files.
                 let files = mapNodes(item.files);
+                const visitedPaths = [];
+
+                if (typeof this._pullsByFile[pr.target_branch] === "undefined") {
+                    this._pullsByFile[pr.target_branch] = {};
+                }
+
                 files.forEach((fileItem) => {
-                    pr.files.push({
-                        "path": fileItem.path,
-                        "changeType": fileItem.changeType,
-                    });
+                    let currentPath = fileItem.path;
+                    while (currentPath !== "") {
+                        if (visitedPaths.includes(currentPath)) {
+                            // Go one level up.
+                            const pathBits = currentPath.split("/");
+                            pathBits.pop();
+                            currentPath = pathBits.join("/");
+
+                            continue;
+                        }
+                        visitedPaths.push(currentPath);
+
+                        pr.files.push({
+                            "path": currentPath,
+                            "changeType": (currentPath === fileItem.path ? fileItem.changeType : ""),
+                            "type": (currentPath === fileItem.path ? "file" : "folder"),
+                        });
+
+                        // Cache the pull information for every file and folder that it includes.
+                        if (typeof this._pullsByFile[pr.target_branch][currentPath] === "undefined") {
+                            this._pullsByFile[pr.target_branch][currentPath] = [];
+                        }
+                        this._pullsByFile[pr.target_branch][currentPath].push(pr.public_id);
+
+                        // Go one level up.
+                        const pathBits = currentPath.split("/");
+                        pathBits.pop();
+                        currentPath = pathBits.join("/");
+                    }
                 });
                 pr.files.sort((a, b) => {
                     if (a.name > b.name) return 1;
@@ -368,17 +399,6 @@ class DataProcessor {
                 });
 
                 this.pulls.push(pr);
-
-                // Cache the pull information for every file that it includes.
-                if (typeof this._pullsByFile[pr.target_branch] === "undefined") {
-                    this._pullsByFile[pr.target_branch] = {};
-                }
-                pr.files.forEach((file) => {
-                    if (typeof this._pullsByFile[pr.target_branch][file.path] === "undefined") {
-                        this._pullsByFile[pr.target_branch][file.path] = [];
-                    }
-                    this._pullsByFile[pr.target_branch][file.path].push(pr.public_id);
-                })
             });
         } catch (err) {
             console.error("    Error parsing pull request data: " + err);
@@ -406,19 +426,15 @@ class DataProcessor {
                     file.parent = parentPath.join("/");
                 }
 
-                // Fetch the PRs touching this file or files in this folder from the cache.
-                if (typeof this._pullsByFile[targetBranch] !== "undefined") {
-                    for (let filePath in this._pullsByFile[targetBranch]) {
-                        if (filePath !== file.path && filePath.indexOf(file.path + "/") < 0) {
-                            continue;
-                        }
+                // Fetch the PRs touching this file or folder from the cache.
+                if (typeof this._pullsByFile[targetBranch] !== "undefined"
+                    && typeof this._pullsByFile[targetBranch][file.path] !== "undefined") {
 
-                        this._pullsByFile[targetBranch][filePath].forEach((pullNumber) => {
-                            if (!file.pulls.includes(pullNumber)) {
-                                file.pulls.push(pullNumber);
-                            }
-                        });
-                    }
+                    this._pullsByFile[targetBranch][file.path].forEach((pullNumber) => {
+                        if (!file.pulls.includes(pullNumber)) {
+                            file.pulls.push(pullNumber);
+                        }
+                    });
                 }
 
                 this.files[targetBranch].push(file);
