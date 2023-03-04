@@ -69,7 +69,9 @@ export default class IndexDescription extends LitElement {
             <div class="header-description">
                 <div class="header-description-column">
                     This page lists all open pull-requests (PRs) associated with the selected file
-                    or folder. The goal here is to help contributors and maintainers identify possible
+                    or folder.
+                    <br>
+                    The goal here is to help contributors and maintainers identify possible
                     conflicts and duplication.
                 </div>
                 <div class="header-description-column header-extra-links">
