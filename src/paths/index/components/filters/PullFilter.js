@@ -29,13 +29,38 @@ export default class PullFilter extends LitElement {
           }
 
           :host .pull-filter-value {
+            position: relative;
+            flex-grow: 1;
+          }
+
+          :host .pull-filter-value input {
             background: var(--g-background-extra2-color);
             border: 2px solid var(--g-background-extra-color);
             border-radius: 4px 4px;
             color: var(--g-font-color);
             font-size: 16px;
-            flex-grow: 1;
-            padding: 8px 12px;
+            padding: 8px 48px 8px 12px;
+            width: calc(100% - 60px);
+          }
+
+          :host .pull-filter-reset {
+            position: absolute;
+            right: -3px;
+            top: 0;
+            bottom: 0;
+            width: 36px;
+            background-color: var(--g-background-extra-color);
+            background-image: url('/remove.svg');
+            background-repeat: no-repeat;
+            background-position: center;
+            background-size: 20px 20px;
+            border: 2px solid var(--g-background-extra-color);
+            border-left: none;
+            border-radius: 0 4px 4px 0;
+            cursor: pointer;
+          }
+          :host .pull-filter-reset:hover {
+            background-color: var(--g-background-extra2-color);
           }
 
           :host .pull-filter-resolved {
@@ -45,7 +70,9 @@ export default class PullFilter extends LitElement {
           }
 
           @media only screen and (max-width: 900px) {
-
+            :host .pull-filter {
+                padding: 0 12px;
+            }
           }
         `;
     }
@@ -53,6 +80,7 @@ export default class PullFilter extends LitElement {
     constructor() {
         super();
 
+        this._rawValue = "";
         this._resolvedValue = "";
     }
 
@@ -77,11 +105,21 @@ export default class PullFilter extends LitElement {
 
     _filterChanged(event) {
         this._resolvedValue = "";
-        const rawValue = event.target.value.trim();
+        this._rawValue = event.target.value.trim();
         
-        if (rawValue !== "") {
-            this._resolvedValue = this._parsePullNumber(rawValue);
+        if (this._rawValue !== "") {
+            this._resolvedValue = this._parsePullNumber(this._rawValue);
         }
+
+        this.dispatchEvent(greports.util.createEvent("filterchanged", {
+            "pull": this._resolvedValue,
+        }));
+        this.requestUpdate();
+    }
+
+    _filterReset(event) {
+        this._rawValue = "";
+        this._resolvedValue = "";
 
         this.dispatchEvent(greports.util.createEvent("filterchanged", {
             "pull": this._resolvedValue,
@@ -93,13 +131,19 @@ export default class PullFilter extends LitElement {
         return html`
             <div class="pull-filter">
                 <span class="pull-filter-label">Input PR link or number:</span>
-                <input
-                    class="pull-filter-value"
-                    type="text"
-                    @change="${this._filterChanged.bind(this)}"
-                />
+                <div class="pull-filter-value">
+                    <input
+                        type="text"
+                        .value="${this._rawValue}"
+                        @change="${this._filterChanged.bind(this)}"
+                    />
+                    <div
+                        class="pull-filter-reset"
+                        @click="${this._filterReset.bind(this)}"
+                    ></div>
+                </div>
                 <span class="pull-filter-resolved">
-                    ${this._resolvedValue}
+                    ${(this._resolvedValue !== "" ? "#" + this._resolvedValue : "")}
                 </span>
             </div>
         `;

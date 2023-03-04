@@ -42,6 +42,12 @@ export default class RootItem extends LitElement {
             min-width: 16px;
           }
 
+          @media (prefers-color-scheme: light) {
+            :host .root-icon {
+              filter: brightness(0.5);
+            }
+          }
+
           :host .root-title {
             font-size: 14px;
             white-space: nowrap;

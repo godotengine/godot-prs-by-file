@@ -57,6 +57,15 @@ export default class FileItem extends LitElement {
             filter: brightness(0.5);
           }
 
+          @media (prefers-color-scheme: light) {
+            :host .file-icon--folder {
+              filter: brightness(0.5);
+            }
+            :host .file-icon--file {
+              filter: none;
+            }
+          }
+
           :host .file-title {
             font-size: 13px;
             white-space: nowrap;
