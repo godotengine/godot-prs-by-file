@@ -4,6 +4,7 @@ import PageContent from 'src/shared/components/PageContent';
 import IndexHeader from "./components/IndexHeader";
 import IndexDescription from "./components/IndexDescription";
 
+import PullFilter from './components/filters/PullFilter';
 import FileList from "./components/files/FileList";
 import PullList from "./components/pulls/PullRequestList"
 
@@ -52,6 +53,8 @@ export default class EntryComponent extends LitElement {
         this._selectedBranch = "master";
         this._selectedPath = "";
         this._selectedPathPulls = [];
+
+        this._filteredPull = "";
 
         this._requestData();
     }
@@ -130,6 +133,19 @@ export default class EntryComponent extends LitElement {
         this.requestUpdate();
     }
 
+    _onPullFilterChanged(event) {
+        this._filteredPull = event.detail.pull;
+        if (this._filteredPull !== "") {
+            const pullNumber = parseInt(this._filteredPull, 10);
+            if (!this._selectedPathPulls.includes(pullNumber)) {
+                this._selectedPath = "";
+                this._selectedPathPulls = [];
+            }
+        }
+
+        this.requestUpdate();
+    }
+
     _onPathClicked(event) {
         this._selectedPath = event.detail.path;
         this._selectedPathPulls = event.detail.pulls;
@@ -142,6 +158,10 @@ export default class EntryComponent extends LitElement {
                 <gr-index-entry .generated_at="${this._generatedAt}"></gr-index-entry>
                 <gr-index-description></gr-index-description>
 
+                <gr-pull-filter
+                    @filterchanged="${this._onPullFilterChanged}"
+                ></gr-pull-filter>
+
                 ${(this._isLoading ? html`
                     <h3>Loading...</h3>
                 ` : html`
@@ -152,6 +172,7 @@ export default class EntryComponent extends LitElement {
                             .selectedRepository="${this._selectedRepository}"
                             .selectedBranch="${this._selectedBranch}"
                             .selectedPath="${this._selectedPath}"
+                            .filteredPull="${this._filteredPull}"
                             @pathclicked="${this._onPathClicked}"
                         ></gr-file-list>
 
@@ -161,6 +182,7 @@ export default class EntryComponent extends LitElement {
                             .selectedBranch="${this._selectedBranch}"
                             .selectedPath="${this._selectedPath}"
                             .selectedPulls="${this._selectedPathPulls}"
+                            .filteredPull="${this._filteredPull}"
                         ></gr-pull-list>
                     </div>
                 `)}

@@ -53,6 +53,7 @@ export default class FileList extends LitElement {
     @property({ type: String }) selectedBranch = "master";
     @property({ type: String }) selectedPath = "";
     @property({ type: Array }) selectedFolders = [];
+    @property({ type: String }) filteredPull = "";
 
     constructor() {
         super();
@@ -86,6 +87,10 @@ export default class FileList extends LitElement {
         <div class="file-list-folder">
             ${(folderFiles.length > 0) ?
                 folderFiles.map((item) => {
+                    if (this.filteredPull !== "" && !item.pulls.includes(parseInt(this.filteredPull, 10))) {
+                      return html``;
+                    }
+
                     return html`
                         <div>
                             <gr-file-item

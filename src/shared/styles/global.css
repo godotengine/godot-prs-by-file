@@ -2,6 +2,7 @@
 :root {
   --g-background-color: #fcfcfa;
   --g-background-extra-color: #98a5b8;
+  --g-background-extra2-color: #cad3e1;
   --g-font-color: #121314;
   --g-font-size: 15px;
   --g-font-weight: 400;
@@ -19,6 +20,7 @@
   :root {
     --g-background-color: #0d1117;
     --g-background-extra-color: #515c6c;
+    --g-background-extra2-color: #22252b;
     --g-font-color: rgba(228, 228, 232, 0.9);
 
     --link-font-color: #367df7;

@@ -167,16 +167,6 @@ class DataFetcher {
                         title
                         url
                       }
-                      
-                      labels (first: 100) {
-                        edges {
-                          node {
-                            id
-                            name
-                            color
-                          }
-                        }
-                      }
 
                       files (first: 100) {
                         edges {
@@ -295,8 +285,6 @@ class DataProcessor {
                     "updated_at": item.updatedAt,
 
                     "target_branch": item.baseRef.name,
-
-                    "labels": [],
                     "milestone": null,
 
                     "files": [],
@@ -337,21 +325,6 @@ class DataProcessor {
                         "url": item.milestone.url,
                     };
                 }
-
-                // Add labels, if available.
-                let labels = mapNodes(item.labels);
-                labels.forEach((labelItem) => {
-                    pr.labels.push({
-                        "id": labelItem.id,
-                        "name": labelItem.name,
-                        "color": "#" + labelItem.color,
-                    });
-                });
-                pr.labels.sort((a, b) => {
-                    if (a.name > b.name) return 1;
-                    if (a.name < b.name) return -1;
-                    return 0;
-                });
 
                 // Add changed files.
                 let files = mapNodes(item.files);

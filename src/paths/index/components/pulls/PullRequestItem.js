@@ -7,16 +7,14 @@ export default class PullRequestItem extends LitElement {
           /** Colors and variables **/
           :host {
             --pr-border-color: #fcfcfa;
-            --draft-font-color: #ffcc31;
-            --draft-background-color: #9db3c0;
+            --star-font-color: #ffcc31;
             --ghost-font-color: #738b99;
           }
 
           @media (prefers-color-scheme: dark) {
             :host {
               --pr-border-color: #0d1117;
-              --draft-font-color: #e0c537;
-              --draft-background-color: #1e313c;
+              --star-font-color: #e0c537;
               --ghost-font-color: #495d68;
             }
           }
@@ -48,13 +46,11 @@ export default class PullRequestItem extends LitElement {
             word-break: break-word;
           }
 
-          :host .pr-title-draft {
-            background-color: var(--draft-background-color);
-            border-radius: 6px 6px;
-            color: var(--draft-font-color);
-            font-size: 14px;
-            padding: 1px 6px;
-            vertical-align: bottom;
+          :host .pr-container--draft .pr-title {
+            filter: saturate(0.4);
+          }
+          :host .pr-container--draft .pr-title-name {
+            opacity: 0.7;
           }
 
           :host .pr-meta {
@@ -63,27 +59,6 @@ export default class PullRequestItem extends LitElement {
             flex-direction: row;
             justify-content: space-between;
             font-size: 13px;
-          }
-
-          :host .pr-labels {
-            display: flex;
-            flex-flow: column wrap;
-            padding: 4px 0;
-            max-height: 60px;
-          }
-
-          :host .pr-label {
-            padding-right: 8px;
-          }
-          :host .pr-label-dot {
-            border-radius: 4px;
-            box-shadow: rgb(0 0 0 / 28%) 0 0 3px 0;
-            display: inline-block;
-            width: 8px;
-            height: 8px;
-          }
-          :host .pr-label-name {
-            padding-left: 3px;
           }
 
           :host .pr-milestone-value {
@@ -107,7 +82,7 @@ export default class PullRequestItem extends LitElement {
           }
           :host .pr-author-value--hot:before {
             content: "★";
-            color: var(--draft-font-color);
+            color: var(--star-font-color);
           }
           :host .pr-author-value--ghost {
             color: var(--ghost-font-color);
@@ -137,10 +112,6 @@ export default class PullRequestItem extends LitElement {
             :host .pr-meta {
               flex-wrap: wrap;
             }
-            :host .pr-labels {
-              width: 100%;
-              justify-content: space-between;
-            }
           }
         `;
     }
@@ -151,7 +122,6 @@ export default class PullRequestItem extends LitElement {
     @property({ type: String, reflect: true }) diff_url = '';
     @property({ type: String, reflect: true }) patch_url = '';
     @property({ type: Boolean }) draft = false;
-    @property({ type: Array }) labels = [];
     @property({ type: String, reflect: true }) milestone = '';
     @property({ type: String, reflect: true }) branch = '';
     @property({ type: String }) created_at = '';
@@ -167,46 +137,17 @@ export default class PullRequestItem extends LitElement {
             authorClassList.push("pr-author-value--ghost");
         }
 
-        // Keep it to two columns, but if there isn't enough labels, keep it to one.
-        let labels_height = Math.ceil(this.labels.length / 2) * 20;
-        if (labels_height < 60) {
-            labels_height = 60;
-        }
-
         return html`
-            <div class="pr-container">
+            <div class="pr-container ${(this.draft ? "pr-container--draft" : "")}">
                 <a
                     class="pr-title"
                     href="${this.url}"
                     target="_blank"
                 >
-                    ${(this.draft ? html`
-                        <span class="pr-title-draft">draft</span>
-                    ` : '')}
                     <span class="pr-title-id">#${this.id}</span> <span class="pr-title-name">${this.title}</span>
                 </a>
 
                 <div class="pr-meta">
-                    <div class="pr-labels" style="max-height:${labels_height}px">
-                        ${this.labels.map((item) => {
-                            return html`
-                                <span
-                                    class="pr-label"
-                                >
-                                    <span
-                                        class="pr-label-dot"
-                                        style="background-color: ${item.color}"
-                                    ></span>
-                                    <span
-                                        class="pr-label-name"
-                                    >
-                                        ${item.name}
-                                    </span>
-                                </span>
-                            `;
-                        })}
-                    </div>
-
                     <div class="pr-milestone">
                         <div>
                             <span>milestone: </span>
@@ -229,6 +170,20 @@ export default class PullRequestItem extends LitElement {
                         </div>
                     </div>
 
+                    <div class="pr-people">
+                        <div class="pr-author">
+                            <span>author: </span>
+                            <a
+                                class="${authorClassList.join(" ")}"
+                                href="https://github.com/godotengine/godot/pulls/${this.author.user}"
+                                target="_blank"
+                                title="Open ${this.author.pull_count} ${(this.author.pull_count > 1) ? 'PRs' : 'PR'} by ${this.author.user}"
+                            >
+                                ${this.author.user}
+                            </a>
+                        </div>
+                    </div>
+
                     <div class="pr-timing">
                         <div class="pr-time">
                             <span>created: </span>
@@ -247,17 +202,6 @@ export default class PullRequestItem extends LitElement {
                             >
                                 ${greports.format.formatDate(this.updated_at)}
                             </span>
-                        </div>
-                        <div class="pr-author">
-                            <span>author: </span>
-                            <a
-                                class="${authorClassList.join(" ")}"
-                                href="https://github.com/godotengine/godot/pulls/${this.author.user}"
-                                target="_blank"
-                                title="Open ${this.author.pull_count} ${(this.author.pull_count > 1) ? 'PRs' : 'PR'} by ${this.author.user}"
-                            >
-                                ${this.author.user}
-                            </a>
                         </div>
                     </div>
                 </div>

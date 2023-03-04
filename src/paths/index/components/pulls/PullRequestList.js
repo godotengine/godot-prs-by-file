@@ -39,15 +39,14 @@ export default class PullRequestList extends LitElement {
             min-width: 60px;
           }
 
-          :host .team-pulls {
+          :host .file-pulls {
             background-color: var(--pulls-background-color);
             border-radius: 0 4px 4px 0;
             padding: 8px 12px;
             max-width: 760px;
-            min-height: 200px;
           }
 
-          :host .team-pulls-toolbar {
+          :host .file-pulls-toolbar {
             background: var(--pulls-toolbar-color);
             border-radius: 4px;
             display: flex;
@@ -68,12 +67,12 @@ export default class PullRequestList extends LitElement {
           }
 
           @media only screen and (max-width: 900px) {
-            :host .team-pulls {
+            :host .file-pulls {
               padding: 8px;
               max-width: 95%;
               margin: 0px auto;
             }
-            :host .team-pulls-toolbar {
+            :host .file-pulls-toolbar {
               flex-wrap: wrap;
             }
             :host .pulls-count {
@@ -95,6 +94,7 @@ export default class PullRequestList extends LitElement {
     @property({ type: String }) selectedBranch = "";
     @property({ type: String }) selectedPath = "";
     @property({ type: Array }) selectedPulls = [];
+    @property({ type: String }) filteredPull = "";
 
     render(){
         if (this.selectedPath === "") {
@@ -115,22 +115,20 @@ export default class PullRequestList extends LitElement {
         });
 
         const total_pulls = this.pulls.length;
-        const filtered_pulls = pulls.length
+        let filtered_pulls = pulls.length
+        
+        const has_pinned = (this.filteredPull !== "");
+        if (has_pinned) {
+          filtered_pulls -= 1;
+        }
 
         return html`
-            <div class="team-pulls">
-                <div class="team-pulls-toolbar">
-                    <div class="pulls-count">
-                        <span>PRs affecting this path: </span>
-                        <strong>${filtered_pulls}</strong>
-                        ${(filtered_pulls !== total_pulls) ? html`
-                            <span class="pulls-count-total"> (out of ${total_pulls})</span>
-                        ` : ''
-                        }
-                    </div>
-                </div>
-
+            <div class="file-pulls">
                 ${pulls.map((item) => {
+                    if (!has_pinned || parseInt(this.filteredPull, 10) !== item.public_id) {
+                        return html``;
+                    }
+
                     let author = null;
                     if (typeof this.authors[item.authored_by] != "undefined") {
                         author = this.authors[item.authored_by];
@@ -143,7 +141,47 @@ export default class PullRequestList extends LitElement {
                             .url="${item.url}"
                             ?draft="${item.is_draft}"
 
-                            .labels="${item.labels}"
+                            .milestone="${item.milestone}"
+                            .branch="${item.target_branch}"
+
+                            .created_at="${item.created_at}"
+                            .updated_at="${item.updated_at}"
+                            .author="${author}"
+
+                            .diff_url="${item.diff_url}"
+                            .patch_url="${item.patch_url}"
+                        />
+                    `;
+                })}
+
+                <div class="file-pulls-toolbar">
+                    <div class="pulls-count">
+                        <span>${(has_pinned ? "Other " : "")}PRs affecting this path: </span>
+                        <strong>${filtered_pulls}</strong>
+                        ${(filtered_pulls !== total_pulls) ? html`
+                            <span class="pulls-count-total"> (out of ${total_pulls})</span>
+                        ` : ''
+                        }
+                    </div>
+                </div>
+
+                ${pulls.map((item) => {
+                    if (has_pinned && parseInt(this.filteredPull, 10) === item.public_id) {
+                        return html``;
+                    }
+
+                    let author = null;
+                    if (typeof this.authors[item.authored_by] != "undefined") {
+                        author = this.authors[item.authored_by];
+                    }
+
+                    return html`
+                        <gr-pull-request
+                            .id="${item.public_id}"
+                            .title="${item.title}"
+                            .url="${item.url}"
+                            ?draft="${item.is_draft}"
+
                             .milestone="${item.milestone}"
                             .branch="${item.target_branch}"
 
