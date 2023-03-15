@@ -1,6 +1,7 @@
 import { LitElement, html, css, customElement, property } from 'lit-element';
 
 import PageContent from 'src/shared/components/PageContent';
+import SharedNavigation from 'src/shared/components/SharedNavigation';
 import IndexHeader from "./components/IndexHeader";
 import IndexDescription from "./components/IndexDescription";
 
@@ -155,6 +156,7 @@ export default class EntryComponent extends LitElement {
     render(){
         return html`
             <page-content>
+                <shared-nav></shared-nav>
                 <gr-index-entry .generated_at="${this._generatedAt}"></gr-index-entry>
                 <gr-index-description></gr-index-description>
 
