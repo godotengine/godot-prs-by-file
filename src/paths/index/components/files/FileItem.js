@@ -42,12 +42,14 @@ export default class FileItem extends LitElement {
           }
 
           :host .file-icon {
-            background-size: cover;
+            background-size: 16px 16px;
+            background-position: 50% 50%;
+            background-repeat: no-repeat;
             border-radius: 2px;
             display: inline-block;
-            width: 16px;
-            height: 16px;
-            min-width: 16px;
+            width: 20px;
+            height: 20px;
+            min-width: 20px;
           }
           :host .file-icon--folder {
             background-image: url('folder.svg');
@@ -102,6 +104,12 @@ export default class FileItem extends LitElement {
     @property({ type: Boolean, reflect: true }) active = false;
     @property({ type: Number }) pull_count = 0;
 
+    _onIconClicked(event) {
+      event.preventDefault();
+      event.stopPropagation();
+      this.dispatchEvent(greports.util.createEvent("iconclick"), {});
+    }
+
     render(){
         const classList = [ "file-item" ];
         if (this.active) {
@@ -120,7 +128,10 @@ export default class FileItem extends LitElement {
               class="${classList.join(" ")}"
               title="${this.path}"
             >
-                <div class="${iconClassList.join(" ")}"></div>
+                <div
+                  class="${iconClassList.join(" ")}"
+                  @click="${this._onIconClicked}"
+                ></div>
                 <span class="file-title">
                     ${this.name}
                 </span>

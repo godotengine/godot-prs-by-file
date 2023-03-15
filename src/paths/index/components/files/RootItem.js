@@ -34,12 +34,14 @@ export default class RootItem extends LitElement {
 
           :host .root-icon {
             background-image: url('filesystem.svg');
-            background-size: cover;
+            background-size: 16px 16px;
+            background-position: 50% 50%;
+            background-repeat: no-repeat;
             border-radius: 2px;
             display: inline-block;
-            width: 16px;
-            height: 16px;
-            min-width: 16px;
+            width: 20px;
+            height: 20px;
+            min-width: 20px;
           }
 
           @media (prefers-color-scheme: light) {
@@ -50,15 +52,20 @@ export default class RootItem extends LitElement {
 
           :host .root-title {
             font-size: 14px;
+            font-weight: 600;
             white-space: nowrap;
             overflow: hidden;
           }
 
           :host .root-branch {
-            color: var(--dimmed-font-color);
+            color: var(--link-font-color);
             flex-grow: 1;
-            font-size: 13px;
+            font-size: 14px;
+            font-weight: 600;
             text-align: right;
+          }
+          :host .root-branch:hover {
+            color: var(--link-font-color-hover);
           }
 
           @media only screen and (max-width: 900px) {
@@ -77,14 +84,32 @@ export default class RootItem extends LitElement {
     @property({ type: String }) repository = "";
     @property({ type: String, reflect: true }) branch = "";
 
+    _onIconClicked(event) {
+      event.preventDefault();
+      event.stopPropagation();
+      this.dispatchEvent(greports.util.createEvent("iconclick"), {});
+    }
+
+    _onBranchClicked(event) {
+      event.preventDefault();
+      event.stopPropagation();
+      this.dispatchEvent(greports.util.createEvent("branchclick"), {});
+    }
+
     render(){
         return html`
             <div class="root-item">
-                <div class="root-icon"></div>
+                <div
+                  class="root-icon"
+                  @click="${this._onIconClicked}"
+                ></div>
                 <span class="root-title">
                     ${this.repository}
                 </span>
-                <span class="root-branch">
+                <span
+                  class="root-branch"
+                  @click="${this._onBranchClicked}"
+                >
                     ${this.branch}
                 </span>
             </div>

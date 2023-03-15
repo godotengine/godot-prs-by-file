@@ -147,10 +147,23 @@ export default class EntryComponent extends LitElement {
         this.requestUpdate();
     }
 
+    _onBranchSelected(event) {
+        if (this._selectedBranch === event.detail.branch) {
+            return;
+        }
+
+        this._selectedBranch = event.detail.branch;
+        this._selectedPath = "";
+        this._selectedPathPulls = [];
+        this.requestUpdate();
+    }
+
     _onPathClicked(event) {
         this._selectedPath = event.detail.path;
         this._selectedPathPulls = event.detail.pulls;
         this.requestUpdate();
+
+        window.scrollTo(0, 0);
     }
 
     render(){
@@ -175,7 +188,8 @@ export default class EntryComponent extends LitElement {
                             .selectedBranch="${this._selectedBranch}"
                             .selectedPath="${this._selectedPath}"
                             .filteredPull="${this._filteredPull}"
-                            @pathclicked="${this._onPathClicked}"
+                            @branchselect="${this._onBranchSelected}"
+                            @pathclick="${this._onPathClicked}"
                         ></gr-file-list>
 
                         <gr-pull-list

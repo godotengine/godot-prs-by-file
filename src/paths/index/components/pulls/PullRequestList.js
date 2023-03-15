@@ -50,8 +50,9 @@ export default class PullRequestList extends LitElement {
             background: var(--pulls-toolbar-color);
             border-radius: 4px;
             display: flex;
-            flex-direction: row;
+            flex-direction: column;
             justify-content: space-between;
+            gap: 8px;
             padding: 10px 14px;
             margin-bottom: 6px;
           }
@@ -66,23 +67,38 @@ export default class PullRequestList extends LitElement {
             color: var(--dimmed-font-color);
           }
 
+          :host .pulls-path {
+            font-size: 15px;
+          }
+          :host .pulls-path strong {
+            font-size: 16px;
+            font-weight: 600;
+            word-break: break-all;
+          }
+
           @media only screen and (max-width: 900px) {
             :host .file-pulls {
               padding: 8px;
               max-width: 95%;
               margin: 0px auto;
             }
-            :host .file-pulls-toolbar {
-              flex-wrap: wrap;
-            }
+
             :host .pulls-count {
               font-size: 17px;
-              margin-bottom: 12px;
               text-align: center;
               width: 100%;
             }
             :host .pulls-count strong {
               font-size: 20px;
+            }
+
+            :host .pulls-path {
+              font-size: 17px;
+              text-align: center;
+              width: 100%;
+            }
+            :host .pulls-path strong {
+              font-size: 18px;
             }
           }
         `;
@@ -155,6 +171,10 @@ export default class PullRequestList extends LitElement {
                 })}
 
                 <div class="file-pulls-toolbar">
+                    <div class="pulls-path">
+                      <span>Current path: </span>
+                      <strong>${this.selectedPath}</strong>
+                    </div>
                     <div class="pulls-count">
                         <span>${(has_pinned ? "Other " : "")}PRs affecting this path: </span>
                         <strong>${filtered_pulls}</strong>
