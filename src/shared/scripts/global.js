@@ -1,6 +1,7 @@
 const LOCAL_PREFERENCE_PREFIX = "_godot_prbf"
 const LOCAL_PREFERENCE_DEFAULTS = {
-
+  "selectedRepository" : "godotengine/godot",
+  "selectedBranches"   : {"godotengine/godot": "master"},
 };
 
 // API Interaction
@@ -14,8 +15,10 @@ const ReportsAPI = {
     return await res.json();
   },
 
-  async getData() {
-    return await this.get("data.json");
+  async getData(repositoryId) {
+    const idBits = repositoryId.split("/");
+
+    return await this.get(`${idBits[0]}.${idBits[1]}.data.json`);
   },
 };
 
@@ -85,6 +88,11 @@ const ReportsUtils = {
     const url = new URL(window.location);
     url.hash = hash;
     window.history.pushState({}, "", url);
+  },
+
+  navigateHistoryHash(hash) {
+    this.setHistoryHash(hash);
+    window.location.reload();
   },
 
   getLocalPreferences() {

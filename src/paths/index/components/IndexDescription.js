@@ -26,6 +26,10 @@ export default class IndexDescription extends LitElement {
           :host .header-description-column {
             flex: 2;
           }
+          :host .header-description-column.header-extra-links {
+            flex: 1;
+            text-align: right;
+          }
 
           :host .header-description a {
             color: var(--link-font-color);
@@ -50,11 +54,24 @@ export default class IndexDescription extends LitElement {
             :host .header-description-column {
               width: 100%;
             }
+            :host .header-description-column.header-extra-links {
+              text-align: center;
+              padding-top: 12px;
+            }
           }
         `;
     }
 
     @property({ type: Date }) generated_at = null;
+
+    constructor() {
+      super();
+
+      this._availableRepos = [
+        "godotengine/godot",
+        "godotengine/godot-docs",
+      ];
+    }
 
     render() {
         return html`
@@ -65,6 +82,18 @@ export default class IndexDescription extends LitElement {
                     <br>
                     The goal here is to help contributors and maintainers identify possible
                     conflicts and duplication.
+                </div>
+                <div class="header-description-column header-extra-links">
+                    Available repositories:
+                    ${this._availableRepos.map((item) => {
+                      return html`
+                        <br />
+                        <a
+                          href="#${item}"
+                          @click="${() => greports.util.navigateHistoryHash(item)}"
+                        >${item}</a>
+                      `;
+                    })}
                 </div>
             </div>
         `;

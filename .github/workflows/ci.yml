@@ -33,8 +33,14 @@ jobs:
     - name: Build the static content using npm
       run: npm run build
     
-    - name: Fetch pull request data
-      run: npm run compose-db
+    - name: Fetch pull request data (godot)
+      run: npm run compose-db -- repo:godot
+      env:
+        GRAPHQL_TOKEN: ${{ secrets.GRAPHQL_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Fetch pull request data (godot-docs)
+      run: npm run compose-db -- repo:godot-docs
       env:
         GRAPHQL_TOKEN: ${{ secrets.GRAPHQL_TOKEN }}
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

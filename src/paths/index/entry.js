@@ -57,6 +57,7 @@ export default class EntryComponent extends LitElement {
 
         this._filteredPull = "";
 
+        this._restoreUserPreferences();
         this._requestData();
     }
 
@@ -65,13 +66,49 @@ export default class EntryComponent extends LitElement {
         super.performUpdate();
     }
 
+    _restoreUserPreferences() {
+        const userPreferences = greports.util.getLocalPreferences();
+
+        this._selectedRepository = userPreferences["selectedRepository"];
+        this._restoreSelectedBranch();
+    }
+
+    _restoreSelectedBranch() {
+        const userPreferences = greports.util.getLocalPreferences();
+
+        if (typeof userPreferences["selectedBranches"][this._selectedRepository] !== "undefined") {
+            this._selectedBranch = userPreferences["selectedBranches"][this._selectedRepository];
+        } else {
+            this._selectedBranch = "master";
+        }
+    }
+
+    _saveUserPreferences() {
+        const storedPreferences = greports.util.getLocalPreferences();
+        let selectedBranches = storedPreferences["selectedBranches"];
+        selectedBranches[this._selectedRepository] = this._selectedBranch;
+
+        const currentPreferences = {
+            "selectedRepository" : this._selectedRepository,
+            "selectedBranches"   : selectedBranches,
+        };
+
+        greports.util.setLocalPreferences(currentPreferences);
+    }
+
     async _requestData() {
         if (this._entryRequested) {
             return;
         }
         this._entryRequested = true;
         this._isLoading = true;
-        const data = await greports.api.getData();
+
+        const requested_repo = greports.util.getHistoryHash();
+        if (requested_repo !== "" && this._selectedRepository !== requested_repo) {
+            this._selectedRepository = requested_repo;
+            this._restoreSelectedBranch();
+        }
+        const data = await greports.api.getData(this._selectedRepository);
 
         if (data) {
             this._generatedAt = data.generated_at;
@@ -116,6 +153,15 @@ export default class EntryComponent extends LitElement {
 
                 this._files[branch] = branchFiles;
             });
+
+            // If our prefered branch doesn't exist, pick master.
+            if (typeof this._files[this._selectedBranch] === "undefined") {
+                this._selectedBranch = "master";
+            }
+            // If master doesn't exist, pick the first available.
+            if (typeof this._files[this._selectedBranch] === "undefined" && data.branches.length > 0) {
+                this._selectedBranch = data.branches[0];
+            }
         } else {
             this._generatedAt = null;
 
@@ -124,7 +170,6 @@ export default class EntryComponent extends LitElement {
             this._files = {};
             this._pulls = [];
 
-            this._selectedRepository = "godotengine/godot";
             this._selectedBranch = "master";
             this._selectedPath = "";
             this._selectedPathPulls = [];
@@ -155,6 +200,8 @@ export default class EntryComponent extends LitElement {
         this._selectedBranch = event.detail.branch;
         this._selectedPath = "";
         this._selectedPathPulls = [];
+
+        this._saveUserPreferences()
         this.requestUpdate();
     }
 
@@ -173,13 +220,13 @@ export default class EntryComponent extends LitElement {
                 <gr-index-entry .generated_at="${this._generatedAt}"></gr-index-entry>
                 <gr-index-description></gr-index-description>
 
-                <gr-pull-filter
-                    @filterchanged="${this._onPullFilterChanged}"
-                ></gr-pull-filter>
-
                 ${(this._isLoading ? html`
                     <h3>Loading...</h3>
                 ` : html`
+                    <gr-pull-filter
+                        @filterchanged="${this._onPullFilterChanged}"
+                    ></gr-pull-filter>
+
                     <div class="files">
                         <gr-file-list
                             .branches="${this._branches}"

@@ -173,7 +173,7 @@ export default class PullRequestList extends LitElement {
                 <div class="file-pulls-toolbar">
                     <div class="pulls-path">
                       <span>Current path: </span>
-                      <strong>${this.selectedPath}</strong>
+                      <strong>./${this.selectedPath}</strong>
                     </div>
                     <div class="pulls-count">
                         <span>${(has_pinned ? "Other " : "")}PRs affecting this path: </span>

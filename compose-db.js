@@ -1,19 +1,13 @@
 const fs = require('fs').promises;
 const fsConstants = require('fs').constants;
-const path = require('path');
 const fetch = require('node-fetch');
-
-const PULLS_PER_PAGE = 100;
-let page_count = 1;
-let last_cursor = "";
 
 const ExitCodes = {
     "RequestFailure": 1,
     "ParseFailure": 2,
 };
 
-const API_REST_PATH = `https://api.github.com/repos/godotengine/godot`;
-const API_REPOSITORY_ID = `owner:"godotengine" name:"godot"`;
+const PULLS_PER_PAGE = 100;
 const API_RATE_LIMIT = `
   rateLimit {
     limit
@@ -24,6 +18,14 @@ const API_RATE_LIMIT = `
 `;
 
 class DataFetcher {
+    constructor(data_owner, data_repo) {
+        this.api_rest_path = `https://api.github.com/repos/${data_owner}/${data_repo}`;
+        this.api_repository_id = `owner:"${data_owner}" name:"${data_repo}"`;
+
+        this.page_count = 1;
+        this.last_cursor = "";
+    }
+
     async _logResponse(data, name) {
         try {
             try {
@@ -86,7 +88,7 @@ class DataFetcher {
             init.headers["Authorization"] = `token ${process.env.GITHUB_TOKEN}`;
         }
     
-        return await fetch(`${API_REST_PATH}${query}`, init);
+        return await fetch(`${this.api_rest_path}${query}`, init);
     }
     
     async checkRates() {
@@ -99,7 +101,7 @@ class DataFetcher {
     
             const res = await this.fetchGithub(query);
             if (res.status !== 200) {
-                this._handleResponseErrors(API_REPOSITORY_ID, res);
+                this._handleResponseErrors(this.api_repository_id, res);
                 process.exitCode = ExitCodes.RequestFailure;
                 return;
             }
@@ -121,15 +123,15 @@ class DataFetcher {
         try {
             let after_cursor = "";
             let after_text = "initial";
-            if (last_cursor !== "") {
-                after_cursor = `after: "${last_cursor}"`;
+            if (this.last_cursor !== "") {
+                after_cursor = `after: "${this.last_cursor}"`;
                 after_text = after_cursor;
             }
 
             const query = `
             query {
               ${API_RATE_LIMIT}
-              repository(${API_REPOSITORY_ID}) {
+              repository(${this.api_repository_id}) {
                 pullRequests(first:${PULLS_PER_PAGE} ${after_cursor} states: OPEN) {
                   totalCount
                   pageInfo {
@@ -184,14 +186,14 @@ class DataFetcher {
             `;
     
             let page_text = page;
-            if (page_count > 1) {
-                page_text = `${page}/${page_count}`;
+            if (this.page_count > 1) {
+                page_text = `${page}/${this.page_count}`;
             }
             console.log(`    Requesting page ${page_text} of pull request data (${after_text}).`);
     
             const res = await this.fetchGithub(query);
             if (res.status !== 200) {
-                this._handleResponseErrors(API_REPOSITORY_ID, res);
+                this._handleResponseErrors(this.api_repository_id, res);
                 process.exitCode = ExitCodes.RequestFailure;
                 return [];
             }
@@ -206,8 +208,8 @@ class DataFetcher {
     
             console.log(`    [$${rate_limit.cost}] Retrieved ${pulls_data.length} pull requests; processing...`);
     
-            last_cursor = repository.pullRequests.pageInfo.endCursor;
-            page_count = Math.ceil(repository.pullRequests.totalCount / PULLS_PER_PAGE);
+            this.last_cursor = repository.pullRequests.pageInfo.endCursor;
+            this.page_count = Math.ceil(repository.pullRequests.totalCount / PULLS_PER_PAGE);
     
             return pulls_data;
         } catch (err) {
@@ -435,7 +437,19 @@ async function main() {
     }
 
     console.log("[*] Building local pull request database.");
-    const dataFetcher = new DataFetcher();
+
+    let data_owner = "godotengine";
+    let data_repo = "godot";
+    process.argv.forEach((arg) => {
+        if (arg.indexOf("owner:") === 0) {
+            data_owner = arg.substring(6);
+        }
+        if (arg.indexOf("repo:") === 0) {
+            data_repo = arg.substring(5);
+        }
+    });
+
+    const dataFetcher = new DataFetcher(data_owner, data_repo);
     const dataProcessor = new DataProcessor();
 
     console.log("[*] Checking the rate limits before.");
@@ -445,7 +459,7 @@ async function main() {
     console.log("[*] Fetching pull request data from GitHub.");
     // Pages are starting with 1 for better presentation.
     let page = 1;
-    while (page <= page_count) {
+    while (page <= dataFetcher.page_count) {
         const pullsRaw = await dataFetcher.fetchPulls(page);
         dataProcessor.processPulls(pullsRaw);
         checkForExit();
@@ -477,7 +491,7 @@ async function main() {
     };
     try {
         console.log("[*] Storing database to file.")
-        await fs.writeFile("out/data.json", JSON.stringify(output), {encoding: "utf-8"});
+        await fs.writeFile(`out/${data_owner}.${data_repo}.data.json`, JSON.stringify(output), {encoding: "utf-8"});
     } catch (err) {
         console.error("Error saving database file: " + err);
     }
