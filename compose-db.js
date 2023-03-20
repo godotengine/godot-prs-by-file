@@ -449,6 +449,7 @@ async function main() {
         }
     });
 
+    console.log(`[*] Configured for the "${data_owner}/${data_repo}" repository.`);
     const dataFetcher = new DataFetcher(data_owner, data_repo);
     const dataProcessor = new DataProcessor();
 
@@ -490,8 +491,9 @@ async function main() {
         "files": dataProcessor.files,
     };
     try {
-        console.log("[*] Storing database to file.")
+        console.log("[*] Storing database to file.");
         await fs.writeFile(`out/${data_owner}.${data_repo}.data.json`, JSON.stringify(output), {encoding: "utf-8"});
+        console.log("[*] Database built.");
     } catch (err) {
         console.error("Error saving database file: " + err);
     }
