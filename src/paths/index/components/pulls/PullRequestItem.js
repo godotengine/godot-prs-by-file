@@ -121,12 +121,16 @@ export default class PullRequestItem extends LitElement {
     @property({ type: String, reflect: true }) url = '';
     @property({ type: String, reflect: true }) diff_url = '';
     @property({ type: String, reflect: true }) patch_url = '';
+
     @property({ type: Boolean }) draft = false;
     @property({ type: String, reflect: true }) milestone = '';
     @property({ type: String, reflect: true }) branch = '';
+
     @property({ type: String }) created_at = '';
     @property({ type: String }) updated_at = '';
     @property({ type: Object }) author = null;
+
+    @property({ type: String }) repository = '';
 
     render(){
         const authorClassList = [ "pr-author-value" ];
@@ -175,7 +179,7 @@ export default class PullRequestItem extends LitElement {
                             <span>author: </span>
                             <a
                                 class="${authorClassList.join(" ")}"
-                                href="https://github.com/godotengine/godot/pulls/${this.author.user}"
+                                href="https://github.com/${this.repository}/pulls/${this.author.user}"
                                 target="_blank"
                                 title="Open ${this.author.pull_count} ${(this.author.pull_count > 1) ? 'PRs' : 'PR'} by ${this.author.user}"
                             >

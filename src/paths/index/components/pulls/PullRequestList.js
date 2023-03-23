@@ -106,7 +106,8 @@ export default class PullRequestList extends LitElement {
 
     @property({ type: Array }) pulls = [];
     @property({ type: Object }) authors = {};
-    
+
+    @property({ type: String }) selectedRepository = "";
     @property({ type: String }) selectedBranch = "";
     @property({ type: String }) selectedPath = "";
     @property({ type: Array }) selectedPulls = [];
@@ -132,7 +133,7 @@ export default class PullRequestList extends LitElement {
 
         const total_pulls = this.pulls.length;
         let filtered_pulls = pulls.length
-        
+
         const has_pinned = (this.filteredPull !== "");
         if (has_pinned) {
           filtered_pulls -= 1;
@@ -166,6 +167,7 @@ export default class PullRequestList extends LitElement {
 
                             .diff_url="${item.diff_url}"
                             .patch_url="${item.patch_url}"
+                            .repository="${this.selectedRepository}"
                         />
                     `;
                 })}
@@ -211,6 +213,7 @@ export default class PullRequestList extends LitElement {
 
                             .diff_url="${item.diff_url}"
                             .patch_url="${item.patch_url}"
+                            .repository="${this.selectedRepository}"
                         />
                     `;
                  })}

@@ -128,7 +128,7 @@ export default class EntryComponent extends LitElement {
                         if (typeof branchFiles[file.parent] === "undefined") {
                             branchFiles[file.parent] = [];
                         }
-    
+
                         branchFiles[file.parent].push(file);
                     }
                 });
@@ -141,10 +141,10 @@ export default class EntryComponent extends LitElement {
                         if (b.type === "folder" && a.type !== "folder") {
                             return 1;
                         }
-        
+
                         const a_name = a.path.toLowerCase();
                         const b_name = b.path.toLowerCase();
-        
+
                         if (a_name > b_name) return 1;
                         if (a_name < b_name) return -1;
                         return 0;
@@ -242,6 +242,7 @@ export default class EntryComponent extends LitElement {
                         <gr-pull-list
                             .pulls="${this._pulls}"
                             .authors="${this._authors}"
+                            .selectedRepository="${this._selectedRepository}"
                             .selectedBranch="${this._selectedBranch}"
                             .selectedPath="${this._selectedPath}"
                             .selectedPulls="${this._selectedPathPulls}"

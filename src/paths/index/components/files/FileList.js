@@ -195,7 +195,7 @@ export default class FileList extends LitElement {
                                 @iconclick="${this._onItemIconClicked.bind(this, item.type, item.path, item.pulls)}"
                             ></gr-file-item>
 
-                            ${(this.selectedFolders.includes(item.path)) ? 
+                            ${(this.selectedFolders.includes(item.path)) ?
                               this.renderFolder(branchFiles, branchFiles[item.path] || []) : null
                             }
                         </div>
