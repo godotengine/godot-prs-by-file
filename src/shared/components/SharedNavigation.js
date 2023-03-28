@@ -106,6 +106,12 @@ export default class SharedNavigation extends LitElement {
                 <a href="https://godotengine.github.io/godot-team-reports/" target="_blank" class="nav-item">
                     Team Reports
                 </a>
+                <a href="https://godotengine.github.io/godot-commit-artifacts/" target="_blank" class="nav-item">
+                    Commit Artifacts
+                </a>
+                <a href="https://godotengine.github.io/godot-interactive-changelog/" target="_blank" class="nav-item">
+                    Interactive Changelog
+                </a>
             </div>
             <div
                 class="nav-toggler"
