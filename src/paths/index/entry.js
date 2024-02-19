@@ -154,7 +154,7 @@ export default class EntryComponent extends LitElement {
                 this._files[branch] = branchFiles;
             });
 
-            // If our prefered branch doesn't exist, pick master.
+            // If our preferred branch doesn't exist, pick master.
             if (typeof this._files[this._selectedBranch] === "undefined") {
                 this._selectedBranch = "master";
             }
